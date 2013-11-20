@@ -1,14 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.IO;
-using System.Xml;
-using System.Xml.Linq;
+using System.Net.Mail;
 using System.Reflection;
 using System.Security.Cryptography;
+using System.Security.Principal;
 using System.ServiceProcess;
+using System.Text;
+using System.Xml.Linq;
 
 namespace CryptoWatcher
 {
@@ -107,7 +106,7 @@ namespace CryptoWatcher
             if (Program.BaselineHash != GetHash(e.FullPath))
             {
                 Console.WriteLine("WARNING: FILE CHANGE DETECTED, USING PROTECTION");
-                string strOwner = System.IO.File.GetAccessControl(e.FullPath).GetOwner(typeof(System.Security.Principal.NTAccount)).ToString();
+                string strOwner = File.GetAccessControl(e.FullPath).GetOwner(typeof(NTAccount)).ToString();
                 Console.WriteLine("NEW OWNER: {0}", strOwner);
                 if (!Convert.ToBoolean(Program.Config.Element("root").Element("testmode").Value))
                 {
@@ -129,7 +128,7 @@ namespace CryptoWatcher
                 }
 
                 //Send admin email
-                SendEmail(System.Environment.MachineName + " FILE SERVICES SHUTDOWN", "Potential CryptoLocker infection\nComputer: " + System.Environment.MachineName + "\nOwner: " + strOwner);
+                SendEmail(Environment.MachineName + " FILE SERVICES SHUTDOWN", "Potential CryptoLocker infection\nComputer: " + Environment.MachineName + "\nOwner: " + strOwner);
             }
         }
 
@@ -146,12 +145,12 @@ namespace CryptoWatcher
 
         static void SendEmail(string strSubject, string strMessage)
         {
-            System.Net.Mail.MailMessage message = new System.Net.Mail.MailMessage();
+            MailMessage message = new MailMessage();
             message.To.Add(Program.Config.Element("root").Element("email").Element("to").Value);
             message.Subject = "[CryptoWatcher] " + strSubject;
-            message.From = new System.Net.Mail.MailAddress(Program.Config.Element("root").Element("email").Element("from").Value);
+            message.From = new MailAddress(Program.Config.Element("root").Element("email").Element("from").Value);
             message.Body = strMessage;
-            System.Net.Mail.SmtpClient smtp = new System.Net.Mail.SmtpClient(Program.Config.Element("root").Element("email").Element("server").Value);
+            SmtpClient smtp = new SmtpClient(Program.Config.Element("root").Element("email").Element("server").Value);
             smtp.Send(message);
         }
 
